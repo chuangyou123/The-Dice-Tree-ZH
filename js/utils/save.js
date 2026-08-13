@@ -261,20 +261,31 @@ function exportSave() {
 	//if (NaNalert) return
 	let str = btoa(JSON.stringify(player));
 
-	const el = document.createElement("textarea");
-	el.value = str;
-	document.body.appendChild(el);
-	el.select();
-	el.setSelectionRange(0, 99999);
-	document.execCommand("copy");
-	document.body.removeChild(el);
+	if (navigator.clipboard && navigator.clipboard.writeText) {
+		// 现代浏览器：Clipboard API（需要 HTTPS）
+		navigator.clipboard.writeText(str).then(() => {
+			alert("存档已复制到剪贴板！");
+		}).catch(() => {
+			prompt("复制失败（浏览器限制了剪贴板权限），请手动复制以下存档文本：", str);
+		});
+	} else {
+		// 旧浏览器回退方案
+		const el = document.createElement("textarea");
+		el.value = str;
+		document.body.appendChild(el);
+		el.select();
+		el.setSelectionRange(0, 99999);
+		document.execCommand("copy");
+		document.body.removeChild(el);
+		alert("存档已复制到剪贴板！");
+	}
 }
 function importSave(imported = undefined, forced = false) {
 	if (imported === undefined)
-		imported = prompt("Paste your save here");
+		imported = prompt("在这里粘贴你的存档");
 	try {
 		tempPlr = Object.assign(getStartPlayer(), JSON.parse(atob(imported)));
-		if (tempPlr.versionType != modInfo.id && !forced && !confirm("This save appears to be for a different mod! Are you sure you want to import?")) // Wrong save (use "Forced" to force it to accept.)
+		if (tempPlr.versionType != modInfo.id && !forced && !confirm("这个存档似乎是另一个模组的！你确定要导入吗？")) // Wrong save (use "Forced" to force it to accept.)
 			return;
 		player = tempPlr;
 		player.versionType = modInfo.id;
